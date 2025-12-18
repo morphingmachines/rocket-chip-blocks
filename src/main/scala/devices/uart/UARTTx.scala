@@ -49,6 +49,7 @@ class UARTTx(c: UARTParams) extends Module {
     val cts_n = c.includeFourWire.option(Input(Bool()))
   })
 
+  //RANGA //val asyncReset = IO(Input(AsyncReset()))
   val prescaler = RegInit(0.U(c.divisorBits.W))
   val pulse = (prescaler === 0.U)
 
@@ -56,7 +57,12 @@ class UARTTx(c: UARTParams) extends Module {
   /** contains databit(8or9), start bit, stop bit and parity bit*/
   val counter = RegInit(0.U((log2Floor(n + c.stopBits) + 1).W))
   val shifter = Reg(UInt(n.W))
-  val out = RegInit(1.U(1.W))
+  //withReset(reset.asAsyncReset) {
+    //val out = withReset(reset.asAsyncReset)RegInit(1.U(1.W))
+  //}
+  val out = withReset(reset.asAsyncReset) {
+    RegInit(1.U(1.W))
+  }
   io.out := out
 
   val plusarg_tx = PlusArg("uart_tx", 1, "Enable/disable the TX to speed up simulation").orR
@@ -94,7 +100,12 @@ class UARTTx(c: UARTParams) extends Module {
   when (pulse && busy) {
     counter := counter - 1.U
     shifter := Cat(1.U(1.W), shifter >> 1)
-    out := shifter(0)
+    //out := shifter(0)
+  }
+  withReset(reset.asAsyncReset) {
+    when (pulse && busy) {
+      out := shifter(0)
+    }
   }
 }
 
